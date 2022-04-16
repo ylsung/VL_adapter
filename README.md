@@ -68,10 +68,16 @@ python -c "import language_evaluation; language_evaluation.download('coco')"
 ## Data
 
 ### Image-text dataset
-We will release our processed data ASAP.
+Please go to [link](https://drive.google.com/file/d/1O_RU1iFh_sbItZCTkOHUrbVIQQ_89Djj/view?usp=sharing) to download the processed CLIP features. We suggest to use [gdrive](https://github.com/prasmussen/gdrive) to download it. Unzip the downloaded file and arrange the folders following the format which is shown in the "Code Structure."
+
+If you would like to use dgrive to download the data, please try the following command
+
+```
+gdrive download 1O_RU1iFh_sbItZCTkOHUrbVIQQ_89Djj
+```
 
 ### Video-text dataset
-Please go [VALUE](https://github.com/VALUE-Leaderboard/DataRelease) to download the ViT processed data.
+Please go to [VALUE](https://github.com/VALUE-Leaderboard/DataRelease) to download the ViT processed data.
 
 ## Run different approaches
 The following scripts can run every approach with the best hyper-parameters.
