@@ -131,19 +131,19 @@ bash scripts/image/multiple_prompts.sh 1
 ```bash
 # Full fine-tuning
 cd VL-T5/
-bash prompt_scripts/video/full_finetuning.sh 1
+bash scripts/video/full_finetuning.sh 1
 
 # Single Adapter
 cd VL-T5/
-bash prompt_scripts/video/single_adapter.sh 1
+bash scripts/video/single_adapter.sh 1
 
 # Single LoRA
 cd VL-T5/
-bash prompt_scripts/video/single_lora.sh 1
+bash scripts/video/single_lora.sh 1
 
 # Single Prompt
 cd VL-T5/
-bash prompt_scripts/video/single_prompt.sh 1
+bash scripts/video/single_prompt.sh 1
 
 ```
 
