@@ -11,6 +11,10 @@ the performance of fine-tuning the entire model.
 
 ![](assets/vl_adapter_teaser.png)
 
+** Note **
+Please go into CLIP-ViL folder and follow the README there for running the experiments of adapters on CLIP-ViL. This README is for adapters on VL-Bart.
+
+
 ## Installation
 
 ```
@@ -150,7 +154,7 @@ bash scripts/video/single_prompt.sh 1
 
 ## Acknowledgement
 
-This repo is adapted from [VLT5](https://github.com/j-min/VL-T5). I also borrow some codes from [CLIP](https://github.com/openai/CLIP), [Compacter](https://github.com/ylsung/compacter), [Hyperformer](https://github.com/rabeehk/hyperformer) and [Prefix-tuning](https://github.com/XiangLi1999/PrefixTuning).
+This repo is adapted from [VLT5](https://github.com/j-min/VL-T5). I also borrow some codes from [CLIP](https://github.com/openai/CLIP), [CLIP-ViL](https://github.com/clip-vil/CLIP-ViL), [Compacter](https://github.com/ylsung/compacter), [Hyperformer](https://github.com/rabeehk/hyperformer) and [Prefix-tuning](https://github.com/XiangLi1999/PrefixTuning).
 
 
 ## Reference
