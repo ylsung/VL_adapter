@@ -28,6 +28,7 @@ I download the checkpoint produced in the second-stage from the [session](#repro
 bash scripts/vqa_baseline.sh 0 snap/vqa/baseline 9590 1
 # adapters
 bash scripts/vqa_adapters.sh 0 snap/vqa/adapters 9590 1
+# You can use the codes commented out in scripts/vqa_baseline.sh and scripts/vqa_adapters.sh to generate the predictions on test data with the trained model.
 ```
 
 ### SNLI
