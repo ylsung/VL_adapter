@@ -1,5 +1,30 @@
 # Feature extraction
 
+
+## Feature extraction using CLIP
+The commands to process COCO images
+```bash
+model_type=$1 # one of [RN50, RN101, RN50x4, ViT-B/32, vit_base_patch32_224_in21k]. The code uses RN101.
+GPU=$2
+
+train_image_root=[The images that store training images]
+val_image_root=[The images that store validation images]
+test_image_root=[The images that store testing images]
+
+output_dir=[A folder that stores all clip_features]
+
+echo Use ${model_type} to extract features
+
+CUDA_VISIBLE_DEVICES=$2 python coco_CLIP.py --model_type ${model_type} --images_root ${train_image_root} --output_dir ${output_dir}
+CUDA_VISIBLE_DEVICES=$2 python coco_CLIP.py --model_type ${model_type} --images_root ${val_image_root} --output_dir ${output_dir}
+CUDA_VISIBLE_DEVICES=$2 python coco_CLIP.py --model_type ${model_type} --images_root ${test_image_root} --output_dir ${output_dir}
+```
+
+---
+The following is the feature extraction using other vision encoders.
+
+
+
 We use [Hao Tan's Detectron2 implementation of 'Bottom-up feature extractor'](https://github.com/airsplay/py-bottom-up-attention), which is compatible with [the original Caffe implementation](https://github.com/peteanderson80/bottom-up-attention).
 
 Following LXMERT, we use the feature extractor which outputs 36 boxes per image.

@@ -112,7 +112,7 @@ class GQAFineTuneDataset(Dataset):
         self.source_to_featname = {
             'train': 'others',
             'valid': 'others',
-            'submit': 'others',
+            'submit': 'testdev',
 
             'testdev': 'testdev'
         }

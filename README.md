@@ -80,6 +80,9 @@ If you would like to use dgrive to download the data, please try the following c
 gdrive download 1O_RU1iFh_sbItZCTkOHUrbVIQQ_89Djj
 ```
 
+### Extract your own CLIP features
+Please refer to `feature_extraction` for more details.
+
 ### Video-text dataset
 Please go to [VALUE](https://github.com/VALUE-Leaderboard/DataRelease) to download the ViT processed data.
 
