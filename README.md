@@ -72,13 +72,56 @@ python -c "import language_evaluation; language_evaluation.download('coco')"
 ## Data
 
 ### Image-text dataset
-Please go to [link](https://drive.google.com/file/d/1O_RU1iFh_sbItZCTkOHUrbVIQQ_89Djj/view?usp=sharing) to download the processed CLIP features. We suggest to use [gdrive](https://github.com/prasmussen/gdrive) to download it. Unzip the downloaded file and arrange the folders following the format which is shown in the "Code Structure."
 
-If you would like to use dgrive to download the data, please try the following command
+The processed CLIP features are hosted on the HuggingFace Hub at
+[**ylsung/VL-Adapter-datasets**](https://huggingface.co/datasets/ylsung/VL-Adapter-datasets).
+(The previous Google Drive link is no longer available.)
 
+Run the restore script from the root of this repository to rebuild `datasets/` in
+exactly the layout shown in "Code structure":
+
+```bash
+pip install huggingface_hub pyarrow h5py numpy
+
+# downloads ~49 GB and expands it into ./datasets (~145 GB on disk)
+python tools/restore_datasets.py --out ./datasets
 ```
-gdrive download 1O_RU1iFh_sbItZCTkOHUrbVIQQ_89Djj
+
+The script downloads one shard at a time and deletes it right after expanding it,
+so it needs less than ~1 GB of scratch space on top of the final tree. It is
+resumable: if it is interrupted, rerun the same command and it skips whatever is
+already on disk.
+
+To restore only part of the data:
+
+```bash
+python tools/restore_datasets.py --out ./datasets --datasets GQA --datasets nlvr
+python tools/restore_datasets.py --out ./datasets --only annotations
 ```
+
+On the Hub the per-image `.h5` feature files are packed into parquet shards,
+because 621,783 loose files exceed the Hub's per-repository limits.
+`restore_datasets.py` unpacks them back into the individual `<img_id>.h5` files
+that `VL-T5/src/*_clip_data.py` reads; the restored feature arrays are bit-exact.
+
+#### A note on raw images
+
+`datasets/*/images/` is **not** needed by any script in `VL-T5/scripts/image/` —
+those read `clip_features`. Raw images are only required for the end-to-end pixel
+training paths (`VL-T5/src/*_raw_data.py`) and for extracting your own features.
+
+The NLVR2 photographs are not redistributed, because the NLVR2 authors do not own
+their copyright. Request them from
+[lil-lab/nlvr](https://github.com/lil-lab/nlvr/tree/master/nlvr2) and place them
+in `datasets/nlvr/images/`. COCO, GQA and Visual Genome images are available from
+[COCO](https://cocodataset.org/#download),
+[GQA](https://cs.stanford.edu/people/dorarad/gqa/download.html) and
+[Visual Genome](https://homes.cs.washington.edu/~ranjay/visualgenome/api.html).
+
+#### Re-creating the Hub copy
+
+`tools/convert_zip_to_hf.py` is the converter that produced the Hub dataset from
+the original `vlt5_dataset` archive, kept here for reproducibility.
 
 ### Extract your own CLIP features
 Please refer to `feature_extraction` for more details.
