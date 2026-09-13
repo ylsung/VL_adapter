@@ -102,10 +102,12 @@ def write_shard(table, path, compression, level, meta):
 class Sink:
     """Writes shards locally and, with --upload, pushes then deletes each one."""
 
-    def __init__(self, out_dir, repo_id, upload, state_path, token=None, private=False):
+    def __init__(self, out_dir, repo_id, upload, state_path, token=None, private=False,
+                 max_stall=86400):
         self.out_dir = Path(out_dir)
         self.repo_id = repo_id
         self.upload = upload
+        self.max_stall = max_stall
         self.state_path = Path(state_path)
         self.done = set()
         if self.state_path.exists():
@@ -131,8 +133,16 @@ class Sink:
         tmp.replace(self.state_path)
 
     def push(self, local_path, rel):
+        """Upload one file, waiting out network outages rather than dying on them.
+
+        A laptop that sleeps overnight looks exactly like a long DNS failure, so
+        retry indefinitely with a capped backoff and only give up after
+        --max-stall seconds of *continuous* failure.
+        """
         if self.upload:
-            for attempt in range(5):
+            delay, attempt, first_failure = 5, 0, None
+            while True:
+                attempt += 1
                 try:
                     self.api.upload_file(
                         path_or_fileobj=str(local_path),
@@ -141,13 +151,24 @@ class Sink:
                         repo_type="dataset",
                         commit_message=f"Add {rel}",
                     )
+                    if first_failure is not None:
+                        print(f"    recovered after {time.time()-first_failure:.0f}s "
+                              f"and {attempt-1} failed attempts", flush=True)
                     break
+                except KeyboardInterrupt:
+                    raise
                 except Exception as exc:  # noqa: BLE001 - retry any transport error
-                    wait = 2 ** attempt * 5
-                    print(f"    upload failed ({exc}); retry in {wait}s", flush=True)
-                    time.sleep(wait)
-            else:
-                raise SystemExit(f"giving up uploading {rel}")
+                    if first_failure is None:
+                        first_failure = time.time()
+                    stalled = time.time() - first_failure
+                    if stalled > self.max_stall:
+                        raise SystemExit(
+                            f"giving up on {rel} after {stalled/3600:.1f}h of failures; "
+                            f"rerun the same command to resume")
+                    print(f"    upload of {rel} failed (attempt {attempt}, "
+                          f"stalled {stalled/60:.1f}min): {exc}; retry in {delay}s", flush=True)
+                    time.sleep(delay)
+                    delay = min(delay * 2, 300)
             local_path.unlink()
         self.mark(rel)
 
@@ -275,6 +296,8 @@ def main():
     p.add_argument("--upload", action="store_true", help="upload each shard then delete it locally")
     p.add_argument("--token", default=None)
     p.add_argument("--private", action="store_true", help="create the dataset repo private")
+    p.add_argument("--max-stall", type=int, default=86400,
+                   help="give up only after this many seconds of continuous upload failure")
     p.add_argument("--shard-rows", type=int, default=4096)
     p.add_argument("--image-shard-bytes", type=int, default=700 * 1024 * 1024)
     p.add_argument("--compression", default="zstd", choices=["zstd", "snappy", "none"])
@@ -291,7 +314,8 @@ def main():
 
     zf = zipfile.ZipFile(args.zip)
     feats, images, others = classify(zf)
-    sink = Sink(args.out, args.repo_id, args.upload, args.state, args.token, args.private)
+    sink = Sink(args.out, args.repo_id, args.upload, args.state, args.token, args.private,
+                args.max_stall)
     manifest = []
 
     if "annotations" in only:
