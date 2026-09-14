@@ -171,6 +171,8 @@ def main():
                    help="restore only these feature datasets (COCO, GQA, VG, nlvr)")
     p.add_argument("--keep-cache", action="store_true", help="do not delete downloaded shards")
     p.add_argument("--verify", type=int, default=25, help="crc-check this many non-h5 files (0 disables)")
+    p.add_argument("--limit-shards", type=int, default=0,
+                   help="smoke test: restore at most this many shards, then stop")
     args = p.parse_args()
 
     out_root = Path(args.out).resolve()
@@ -197,6 +199,9 @@ def main():
         todo = [s for s in todo
                 if not s.startswith("features/") or s.split("/")[1] in keep]
 
+    if args.limit_shards:
+        todo = todo[: args.limit_shards]
+        print(f"[restore] SMOKE TEST: limited to {len(todo)} shards")
     print(f"[restore] {len(todo)} shards -> {out_root}")
     for n, shard in enumerate(todo, 1):
         recs = by_shard[shard]
@@ -224,7 +229,8 @@ def main():
         (out_root / rel).mkdir(parents=True, exist_ok=True)
     drop(man_path, man_dl, args.keep_cache)
 
-    if args.verify and not args.datasets and only == {"features", "images", "annotations"}:
+    if args.verify and not args.datasets and not args.limit_shards \
+            and only == {"features", "images", "annotations"}:
         ok = verify(out_root, manifest, args.verify)
         if not ok:
             return 1
