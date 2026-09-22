@@ -83,7 +83,7 @@ exactly the layout shown in "Code structure":
 ```bash
 pip install huggingface_hub pyarrow h5py numpy
 
-# downloads ~49 GB and expands it into ./datasets (~145 GB on disk)
+# downloads ~47 GB and expands it into ./datasets (~132 GB on disk)
 python tools/restore_datasets.py --out ./datasets
 ```
 
@@ -95,8 +95,13 @@ already on disk.
 To restore only part of the data:
 
 ```bash
+# one dataset at a time: GQA needs 30.2 GB restored, nlvr 24.3 GB,
+# COCO 49.9 GB, VG 22.0 GB, annotations 5.7 GB
 python tools/restore_datasets.py --out ./datasets --datasets GQA --datasets nlvr
 python tools/restore_datasets.py --out ./datasets --only annotations
+
+# smoke test the download path without committing to the full tree
+python tools/restore_datasets.py --out ./datasets --only features --datasets VG --limit-shards 3
 ```
 
 On the Hub the per-image `.h5` feature files are packed into parquet shards,

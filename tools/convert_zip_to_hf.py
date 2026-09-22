@@ -84,7 +84,14 @@ def images_table(ids, blobs):
     return pa.table({"id": pa.array(ids, type=pa.string()), "image": image})
 
 
-def write_shard(table, path, compression, level, meta):
+def write_shard(table, path, compression, level, meta, row_group_size=128):
+    """Write one shard.
+
+    Small row groups matter here: a reader that wants a single row must fetch a
+    whole row group, so 4096-row groups meant pulling ~282 MB to read one image.
+    At 128 rows that drops to ~8.6 MB, and for this data it also compresses
+    slightly *better* (-2.2%), so there is no size penalty to pay for it.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     schema = table.schema.with_metadata({k: str(v) for k, v in meta.items()})
     pq.write_table(
@@ -92,6 +99,7 @@ def write_shard(table, path, compression, level, meta):
         path,
         compression=compression,
         compression_level=level if compression == "zstd" else None,
+        row_group_size=row_group_size,
     )
     return path.stat().st_size
 
@@ -217,7 +225,8 @@ def convert_features(zf, group, infos, sink, args, manifest):
         path = Path(args.out) / rel
         size = write_shard(table, path, args.compression, args.level,
                            {"source": f"{ROOT}{dataset}/clip_features/{variant}",
-                            "shape": str(FEAT_SHAPE), "dtype": "float16"})
+                            "shape": str(FEAT_SHAPE), "dtype": "float16"},
+                           row_group_size=args.row_group_size)
         del table
         gc.collect()
         print(f"  {rel}: {len(chunk)} rows, {size/1e6:.1f} MB, {time.time()-t0:.1f}s", flush=True)
@@ -235,7 +244,8 @@ def convert_images(zf, infos, sink, args, manifest):
             return
         table = images_table(batch, blobs)
         path = Path(args.out) / rel
-        size = write_shard(table, path, "zstd", 1, {"source": f"{ROOT}nlvr/images"})
+        size = write_shard(table, path, "zstd", 1, {"source": f"{ROOT}nlvr/images"},
+                           row_group_size=args.row_group_size)
         print(f"  {rel}: {len(batch)} images, {size/1e6:.1f} MB", flush=True)
         sink.push(path, rel)
 
@@ -299,6 +309,8 @@ def main():
     p.add_argument("--max-stall", type=int, default=86400,
                    help="give up only after this many seconds of continuous upload failure")
     p.add_argument("--shard-rows", type=int, default=4096)
+    p.add_argument("--row-group-size", type=int, default=128,
+                   help="rows per parquet row group; smaller = cheaper single-row reads")
     p.add_argument("--image-shard-bytes", type=int, default=700 * 1024 * 1024)
     p.add_argument("--compression", default="zstd", choices=["zstd", "snappy", "none"])
     p.add_argument("--level", type=int, default=9)
