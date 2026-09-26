@@ -73,9 +73,21 @@ python -c "import language_evaluation; language_evaluation.download('coco')"
 
 ### Image-text dataset
 
-The processed CLIP features are hosted on the HuggingFace Hub at
+> [!IMPORTANT]
+> My university drive has a 15GB limit for alumni accounts, so I have moved the
+> dataset to HuggingFace. The original Google Drive instructions are kept below,
+> struck through, for reference — that link no longer works.
+
+~~Please go to [link](https://drive.google.com/file/d/1O_RU1iFh_sbItZCTkOHUrbVIQQ_89Djj/view?usp=sharing) to download the processed CLIP features. We suggest to use [gdrive](https://github.com/prasmussen/gdrive) to download it. Unzip the downloaded file and arrange the folders following the format which is shown in the "Code Structure."~~
+
+~~If you would like to use dgrive to download the data, please try the following command~~
+
+~~`gdrive download 1O_RU1iFh_sbItZCTkOHUrbVIQQ_89Djj`~~
+
+#### Download from HuggingFace
+
+The processed CLIP features are now hosted on the HuggingFace Hub at
 [**ylsung/VL-Adapter-datasets**](https://huggingface.co/datasets/ylsung/VL-Adapter-datasets).
-(The previous Google Drive link is no longer available.)
 
 Run the restore script from the root of this repository to rebuild `datasets/` in
 exactly the layout shown in "Code structure":
