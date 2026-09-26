@@ -72,13 +72,83 @@ python -c "import language_evaluation; language_evaluation.download('coco')"
 ## Data
 
 ### Image-text dataset
-Please go to [link](https://drive.google.com/file/d/1O_RU1iFh_sbItZCTkOHUrbVIQQ_89Djj/view?usp=sharing) to download the processed CLIP features. We suggest to use [gdrive](https://github.com/prasmussen/gdrive) to download it. Unzip the downloaded file and arrange the folders following the format which is shown in the "Code Structure."
 
-If you would like to use dgrive to download the data, please try the following command
+> [!IMPORTANT]
+> My university drive has a 15GB limit for alumni accounts, so I have moved the
+> dataset to HuggingFace. The original Google Drive instructions are kept below,
+> struck through, for reference — that link no longer works.
 
+~~Please go to [link](https://drive.google.com/file/d/1O_RU1iFh_sbItZCTkOHUrbVIQQ_89Djj/view?usp=sharing) to download the processed CLIP features. We suggest to use [gdrive](https://github.com/prasmussen/gdrive) to download it. Unzip the downloaded file and arrange the folders following the format which is shown in the "Code Structure."~~
+
+~~If you would like to use dgrive to download the data, please try the following command~~
+
+~~`gdrive download 1O_RU1iFh_sbItZCTkOHUrbVIQQ_89Djj`~~
+
+#### Download from HuggingFace
+
+The processed CLIP features are now hosted on the HuggingFace Hub at
+[**ylsung/VL-Adapter-datasets**](https://huggingface.co/datasets/ylsung/VL-Adapter-datasets).
+
+Run the restore script from the root of this repository to rebuild `datasets/` in
+exactly the layout shown in "Code structure":
+
+```bash
+pip install huggingface_hub pyarrow h5py numpy
+
+# downloads ~47 GB and expands it into ./datasets (~132 GB on disk)
+python tools/restore_datasets.py --out ./datasets
 ```
-gdrive download 1O_RU1iFh_sbItZCTkOHUrbVIQQ_89Djj
+
+The script downloads one shard at a time and deletes it right after expanding it,
+so it needs less than ~1 GB of scratch space on top of the final tree. It is
+resumable: if it is interrupted, rerun the same command and it skips whatever is
+already on disk.
+
+To restore only part of the data:
+
+```bash
+# one dataset at a time: GQA needs 30.2 GB restored, nlvr 24.3 GB,
+# COCO 49.9 GB, VG 22.0 GB, annotations 5.7 GB
+python tools/restore_datasets.py --out ./datasets --datasets GQA --datasets nlvr
+python tools/restore_datasets.py --out ./datasets --only annotations
+
+# smoke test the download path without committing to the full tree
+python tools/restore_datasets.py --out ./datasets --only features --datasets VG --limit-shards 3
 ```
+
+To check the whole publish/restore round trip without downloading 132 GB,
+`tools/test_restore_roundtrip.py` builds a miniature mirror of the dataset from
+the original archive, pushes it to a throwaway private Hub repo, restores it with
+the plain command above, compares every file against the archive, and deletes the
+temp repo:
+
+```bash
+python tools/test_restore_roundtrip.py --zip VLadapter.zip --namespace <your-hf-user>
+```
+
+On the Hub the per-image `.h5` feature files are packed into parquet shards,
+because 621,783 loose files exceed the Hub's per-repository limits.
+`restore_datasets.py` unpacks them back into the individual `<img_id>.h5` files
+that `VL-T5/src/*_clip_data.py` reads; the restored feature arrays are bit-exact.
+
+#### A note on raw images
+
+`datasets/*/images/` is **not** needed by any script in `VL-T5/scripts/image/` —
+those read `clip_features`. Raw images are only required for the end-to-end pixel
+training paths (`VL-T5/src/*_raw_data.py`) and for extracting your own features.
+
+The NLVR2 photographs are not redistributed, because the NLVR2 authors do not own
+their copyright. Request them from
+[lil-lab/nlvr](https://github.com/lil-lab/nlvr/tree/master/nlvr2) and place them
+in `datasets/nlvr/images/`. COCO, GQA and Visual Genome images are available from
+[COCO](https://cocodataset.org/#download),
+[GQA](https://cs.stanford.edu/people/dorarad/gqa/download.html) and
+[Visual Genome](https://homes.cs.washington.edu/~ranjay/visualgenome/api.html).
+
+#### Re-creating the Hub copy
+
+`tools/convert_zip_to_hf.py` is the converter that produced the Hub dataset from
+the original `vlt5_dataset` archive, kept here for reproducibility.
 
 ### Extract your own CLIP features
 Please refer to `feature_extraction` for more details.
