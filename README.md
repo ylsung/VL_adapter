@@ -104,6 +104,16 @@ python tools/restore_datasets.py --out ./datasets --only annotations
 python tools/restore_datasets.py --out ./datasets --only features --datasets VG --limit-shards 3
 ```
 
+To check the whole publish/restore round trip without downloading 132 GB,
+`tools/test_restore_roundtrip.py` builds a miniature mirror of the dataset from
+the original archive, pushes it to a throwaway private Hub repo, restores it with
+the plain command above, compares every file against the archive, and deletes the
+temp repo:
+
+```bash
+python tools/test_restore_roundtrip.py --zip VLadapter.zip --namespace <your-hf-user>
+```
+
 On the Hub the per-image `.h5` feature files are packed into parquet shards,
 because 621,783 loose files exceed the Hub's per-repository limits.
 `restore_datasets.py` unpacks them back into the individual `<img_id>.h5` files
